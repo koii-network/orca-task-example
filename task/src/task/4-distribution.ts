@@ -1,58 +1,67 @@
-import { Submitter, DistributionList } from "@_koii/task-manager";
-import { namespaceWrapper, TASK_ID } from "@_koii/namespace-wrapper";
-import { customReward, status } from "../utils/constant";
-import { Submission } from "@_koii/namespace-wrapper/dist/types";
-const getSubmissionList = async (roundNumber: number): Promise<Record<string, Submission>> => {
-  const submissionInfo = await namespaceWrapper.getTaskSubmissionInfo(roundNumber);
-  return submissionInfo?.submissions[roundNumber] || {};
-};
-export const getEmptyDistributionList = async (submitters: Submitter[]): Promise<DistributionList> => {
-  const distributionList: DistributionList = {};
-  for (const submitter of submitters) {
-    distributionList[submitter.publicKey] = 0;
-  }
-  return distributionList;
-};
+import {Submitter, DistributionList} from '@_koii/task-manager';
+const SLASH_PERCENT = 0.7;
+
 export const distribution = async (
   submitters: Submitter[],
   bounty: number,
-  roundNumber: number,
+  roundNumber: number
 ): Promise<DistributionList> => {
-  try {
-    const distributionList: DistributionList = {};
+  /**
+   * Generate the reward list for a given round
+   * This function should return an object with the public keys of the submitters as keys
+   * and the reward amount as values
+   *
+   * IMPORTANT: If the slashedStake or reward is not an integer, the distribution list will be rejected
+   * Values are in ROE, or the KPL equivalent (1 Token = 10^9 ROE)
+   *
+   */
+  console.log(`MAKE DISTRIBUTION LIST FOR ROUND ${roundNumber}`);
 
-    for (const submitter of submitters) {
-      console.log(`\n[DISTRIBUTION] Processing submitter: ${submitter.publicKey}`);
+  // Initialize an empty object to store the final distribution list
+  const distributionList: DistributionList = {};
 
-      console.log(`[DISTRIBUTION] Getting submission list for round ${roundNumber}`);
-      const submitterSubmissions = await getSubmissionList(roundNumber);
-      console.log(`[DISTRIBUTION] Total submissions found: ${Object.keys(submitterSubmissions).length}`);
+  // Initialize an empty array to store the public keys of submitters with correct values
+  const approvedSubmitters = [];
 
-      const submitterSubmission = submitterSubmissions[submitter.publicKey];
-      if (!submitterSubmission || submitterSubmission.submission_value === "") {
-        console.log(`[DISTRIBUTION] ❌ No valid submission found for submitter ${submitter.publicKey}`);
-        distributionList[submitter.publicKey] = 0;
-        continue;
-      }
-      if (Object.values(status).includes(submitterSubmission.submission_value)) {
-        distributionList[submitter.publicKey] = 0;
-        continue;
-      } else {
-        // TODO: Check if I should include = 0 here
-        if (submitter.votes >= 0) {
-          distributionList[submitter.publicKey] = customReward;
-        } else {
-          distributionList[submitter.publicKey] = 0;
-        }
-      }
+  // Iterate through the list of submitters and handle each one
+  for (const submitter of submitters) {
+    // If the submitter's votes are 0, they do not get any reward
+    if (submitter.votes === 0) {
+      distributionList[submitter.publicKey] = 0;
+
+      // If the submitter's votes are negative (submitted incorrect values), slash their stake
+    } else if (submitter.votes < 0) {
+      // Slash the submitter's stake by the defined percentage
+      const slashedStake = Math.floor(submitter.stake * SLASH_PERCENT);
+      // Add the slashed amount to the distribution list
+      // since the stake is positive, we use a negative value to indicate a slash
+      distributionList[submitter.publicKey] = -slashedStake;
+
+      // Log that the submitter's stake has been slashed
+      console.log('CANDIDATE STAKE SLASHED', submitter.publicKey, slashedStake);
+
+      // If the submitter's votes are positive, add their public key to the approved submitters list
+    } else {
+      approvedSubmitters.push(submitter.publicKey);
     }
-
-    console.log(`[DISTRIBUTION] ✅ Distribution completed successfully`);
-    console.log(`[DISTRIBUTION] Final distribution list:`, distributionList);
-    return distributionList;
-  } catch (error: any) {
-    console.error(`[DISTRIBUTION] ❌ ERROR IN DISTRIBUTION:`, error);
-    console.error(`[DISTRIBUTION] Error stack:`, error.stack);
-    return {};
   }
+
+  // If no submitters submitted correct values, return the current distribution list
+  if (approvedSubmitters.length === 0) {
+    console.log('NO NODES TO REWARD');
+    return distributionList;
+  }
+
+  // Calculate the reward for each approved submitter by dividing the bounty per round equally among them
+  const reward = Math.floor(bounty / approvedSubmitters.length);
+
+  console.log('REWARD PER NODE', reward);
+
+  // Assign the calculated reward to each approved submitter
+  approvedSubmitters.forEach((candidate) => {
+    distributionList[candidate] = reward;
+  });
+
+  // Return the final distribution list
+  return distributionList;
 };

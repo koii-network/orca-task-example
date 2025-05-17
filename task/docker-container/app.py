@@ -1,29 +1,10 @@
 from flask import Flask, request, jsonify, g
 import sqlite3
+import requests
 
 app = Flask(__name__)
 
 DATABASE = "results.db"
-
-
-def get_db():
-    if "db" not in g:
-        g.db = sqlite3.connect(DATABASE)
-        g.db.row_factory = sqlite3.Row
-        # Initialize the database schema if it hasn't been initialized yet
-        cursor = g.db.cursor()
-        cursor.execute(
-            "CREATE TABLE IF NOT EXISTS submissions (roundNumber INTEGER PRIMARY KEY, submission TEXT)"
-        )
-        g.db.commit()
-    return g.db
-
-
-def close_db():
-    db = g.pop("db", None)
-
-    if db is not None:
-        db.close()
 
 
 @app.get("/")
@@ -36,34 +17,36 @@ def health_check():
     return "OK"
 
 
-@app.post("/task/<roundNumber>")
-def start_task(roundNumber):
-    print("Task started for round: " + roundNumber)
-    db = get_db()
-    cursor = db.cursor()
-    cursor.execute(
-        "INSERT OR IGNORE INTO submissions (roundNumber, submission) VALUES (?, ?)",
-        (roundNumber, "Hello World!"),
+@app.post("/task/<todoId>")
+def start_task(todoId):
+    print("Task started: " + todoId)
+    data = request.get_json()
+    task_id = data["task_id"]
+
+    # The following task execution and submission can be offloaded to a separate thread:
+
+    print("Starting task... This can be moved to a background thread.")
+
+    # Perform the task
+    result = fibonacci(10)
+
+    # Store result in the database
+    insertToDb(todoId, str(result))
+
+    # Submit result to the JavaScript service
+    requests.post(
+        f"http://host.docker.internal:30017/task/{task_id}/submit-to-js",
+        json={
+            "success": True,
+            "result": result
+        },
     )
-    db.commit()
-    close_db()
-    return jsonify({"roundNumber": roundNumber, "status": "Task started"})
+
+    # Consider moving the above block to a background thread for non-blocking behavior.
+    
+    return jsonify({"todoId": todoId, "status": "Task started"})
 
 
-@app.get("/submission/<roundNumber>")
-def fetch_submission(roundNumber):
-    print("Fetching submission for round: " + roundNumber)
-    db = get_db()
-    cursor = db.cursor()
-    query = cursor.execute(
-        "SELECT * FROM submissions WHERE roundNumber = ?", (roundNumber,)
-    )
-    result = query.fetchone()
-    close_db()
-    if result:
-        return jsonify({"message": result["submission"]})
-    else:
-        return "Submission not found", 404
 
 
 @app.post("/audit")
@@ -77,3 +60,39 @@ def audit_submission():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8080, threaded=False)
+
+
+def fibonacci(n):
+    if n <= 1:
+        return n
+    return fibonacci(n - 1) + fibonacci(n - 2)
+
+def insertToDb(todoId, submission):
+    db = get_db()
+    cursor = db.cursor()
+    cursor.execute(
+        "INSERT OR IGNORE INTO submissions (todoId, submission) VALUES (?, ?)",
+        (todoId, submission),
+    )
+    db.commit()
+    close_db()
+
+def get_db():
+    if "db" not in g:
+        g.db = sqlite3.connect(DATABASE)
+        g.db.row_factory = sqlite3.Row
+        # Initialize the database schema if it hasn't been initialized yet
+        cursor = g.db.cursor()
+        cursor.execute(
+            "CREATE TABLE IF NOT EXISTS submissions (todoId varchar(255) PRIMARY KEY, submission TEXT)"
+        )
+        g.db.commit()
+    return g.db
+
+
+def close_db():
+    db = g.pop("db", None)
+
+    if db is not None:
+        db.close()
+

@@ -30,6 +30,7 @@
     "dotenv-webpack": "^8.1.0",
     "js-yaml": "^4.1.0",
     "lodash": "^4.17.21",
+    "node-cron": "^4.0.5",
     "nodemon": "^3.1.0",
     "seedrandom": "^3.0.5",
     "tail": "^2.2.6",
