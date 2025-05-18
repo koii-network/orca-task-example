@@ -4,8 +4,9 @@ import { middleServerUrl } from '../constant';
 import { getOrcaClient } from '../orca';
 export async function setup(): Promise<void> {
   // Setup a cron job to run every 1 minutes
+  console.log("CRON JOB SETUP TO RUN EVERY MINUTE AND FETCH TODO FROM MIDDLE SERVER")
   cron.schedule('* * * * *', () => {
-    console.log('(Per 1 minute cron) Checking for a new task!');
+    console.log('\n----------------------------------Triggered (Per 1 minute cron) Checking for a new task! --------------------------------- \n\n');
     task();
   });
 }
@@ -43,7 +44,7 @@ export async function task() {
     console.log("RESPONSE FROM MIDDLE SERVER: ", resp);
     const orcaClient = await getOrcaClient();
     resp.data.task_id = TASK_ID || "TESTING_TASK_ID";
-    console.log("ASSIGNING TODO TO PYTHON CONTAINER")
+    console.log("Assigning todo to python container")
     const result = await orcaClient.podCall(`task/${resp.data.todoID}`, {
       method: 'POST',
       headers: {
@@ -51,10 +52,15 @@ export async function task() {
       },
       body: JSON.stringify(resp.data),
     });
-    console.log("RESULT FROM PYTHON CONTAINER: ", result);
+    console.log("Reponse from python container: ", result);
     await namespaceWrapper.storeSet(`isWorkingOnTodo`, "true");
-  } catch (error) {
-    console.error('ERROR in setup cron job: ', error);
+  } catch (error: any) {
+    if (error?.message?.includes("fetch failed")) {
+      console.error("Middle server is not running, please run middle server first");
+      process.exit(1);
+    } else {
+      console.error('ERROR in setup cron job: ', error);
+    }
   }
 }
 

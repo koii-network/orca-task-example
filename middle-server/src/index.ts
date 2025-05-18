@@ -55,7 +55,7 @@ app.post("/fetch-todo", (req: express.Request, res: express.Response) => {
 app.post("/post-todo-result", (req: express.Request, res: express.Response) => {
 
     // Receive the response for the Todo and act upon it (The todo response will also be submitted to the task result)
-    const { signature, stakingPubkey, data } = req.body.taskID;
+    const { signature, stakingPubkey, result, cid } = req.body;
     // Verify the signature
     if (!signature) {
         console.log("SIGNATURE NOT FOUND");
@@ -75,8 +75,9 @@ app.post("/post-todo-result", (req: express.Request, res: express.Response) => {
         return;
     }
 
-    console.log("RECEIVED TODO RESPONSE by ", stakingPubkey, data);
-
+    console.log("\n\nRECEIVED Result: ", result);
+    console.log("CID", cid);
+    console.log("\n\n");
     res.json({ status: 200, message: "success" });
 })
 

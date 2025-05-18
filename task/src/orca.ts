@@ -14,11 +14,22 @@ function initializeOrcaClientForTesting() {
     const containerDir = path.join(__dirname, "../docker-container");
     const RED_CODE = "\x1b[91m";
     const RESET_CODE = "\x1b[0m";
+    const BLUE_CODE = "\x1b[94m"; // for Python logs
+
     console.log(
         `${RED_CODE}TEST MODE: Starting the python server in ${containerDir}${RESET_CODE}`
-    ); const python = spawn("python", ["app.py"], {
+    ); const python = spawn("python", ["-u","app.py"], {
         cwd: containerDir,
-        stdio: "inherit", // pipe stdout/stderr to this process
+        stdio: ["ignore", "pipe", "pipe"],
+    });
+    // Handle stdout from Python
+    python.stdout.on("data", (data) => {
+        process.stdout.write(`${BLUE_CODE}[PYTHON] ${data}${RESET_CODE}`);
+    });
+
+    // Handle stderr from Python
+    python.stderr.on("data", (data) => {
+        process.stderr.write(`${BLUE_CODE}[PYTHON] ${data}${RESET_CODE}`);
     });
 
     python.on("exit", (code) => {
@@ -28,7 +39,7 @@ function initializeOrcaClientForTesting() {
 }
 function getOrcaClientForTesting() {
     const podCall = async (url: string, data: any) => {
-        console.log("CALLING", url, " with ", data)
+        console.log("Calling Python container with", url, " with ", data)
         try {
             const response = await fetch(pythonServer + url, data);
             return response.json();
