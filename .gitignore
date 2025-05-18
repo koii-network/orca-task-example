@@ -1,1 +1,7 @@
 task/node_modules*
+.env
+node_modules*
+__pycache__
+yarn-error.log
+localKOIIDB.db
+results.db

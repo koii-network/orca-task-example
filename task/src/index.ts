@@ -6,7 +6,8 @@ import { audit } from "./task/3-audit";
 import { distribution } from "./task/4-distribution";
 import { routes } from "./task/5-routes";
 
-import { initializeOrcaClient } from "@_koii/task-manager/extensions";
+// import { initializeOrcaClient } from "@_koii/task-manager/extensions";
+import { initializeOrcaClient } from "./orca";
 import { getConfig } from "./orcaSettings";
 
 initializeTaskManager({
