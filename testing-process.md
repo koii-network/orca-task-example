@@ -11,6 +11,14 @@ Make sure you have the following installed:
 *   Python 3
 *   pip (Python package installer)
 
+## .env Setup
+
+Start by coping .env.example to .env and then populate your variables.
+
+If you do not have a Koii wallet configured, you can create one by following this tutorial: https://www.koii.network/docs/develop/command-line-tool/koii-cli/create-wallet
+
+If you need to fund your wallet for deployment, you can use https://buy.koii.network to buy some compute credits.
+
 ## Setup Instructions
 
 1.  **Clone the Repository:**
