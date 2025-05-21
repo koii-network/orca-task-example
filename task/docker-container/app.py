@@ -45,17 +45,17 @@ def run_todo_task_async(todo, input_value, todoId, task_id):
     )
     task_thread.start()
 
-@app.get("/")
+@app.route("/")
 def home():
     return "OK"
 
 
-@app.post("/healthz")
+@app.route("/healthz", methods=["POST"])
 def health_check():
     return jsonify({"status": "running"})
 
 
-@app.post("/task/<task_id>", methods=["POST"])
+@app.route("/task/<task_id>", methods=["POST"])
 def task_handler(task_id):
     try:
         data = request.get_json()
@@ -95,7 +95,7 @@ def task_handler(task_id):
         return jsonify({"error": str(e)}), 500
 
 
-@app.post("/audit")
+@app.route("/audit", methods=["POST"])
 def audit_submission():
     print("Auditing submission")
     data = request.get_json()
