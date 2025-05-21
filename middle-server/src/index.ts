@@ -5,7 +5,9 @@ import { v4 as uuidv4 } from "uuid";
 import { verifySignature } from "./utils/verifySignature";
 
 export const app = express();
-const port = process.env.PORT || 5000;
+// Add host configuration
+const host = process.env.HOST || 'localhost';
+const port = process.env.PORT || 5001;
 
 configureMorgan(morgan, app);
 
@@ -102,6 +104,6 @@ app.use((err: Error, req: express.Request, res: express.Response, next: express.
 });
 
 app.listen(port, () => {
-    console.log("\x1b[36m%s\x1b[0m", `Server running at http://localhost:${port}`);
+    console.log("\x1b[36m%s\x1b[0m", `Server running at http://${host}:${port}`);
 })
 

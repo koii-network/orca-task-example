@@ -5,7 +5,10 @@ import { spawn } from "child_process";
 import path from "path";
 import dotenv from "dotenv";
 
-const pythonServer = "http://localhost:8080/"
+// Use environment variables for the python server port
+const pythonServerHost = process.env.PYTHON_SERVER_HOST || 'localhost';
+const pythonServerPort = process.env.PYTHON_SERVER_PORT || '8080';
+const pythonServer = `http://${pythonServerHost}:${pythonServerPort}/`;
 
 function initializeOrcaClientForTesting() {
 
@@ -16,9 +19,12 @@ function initializeOrcaClientForTesting() {
     const RESET_CODE = "\x1b[0m";
     const BLUE_CODE = "\x1b[94m"; // for Python logs
 
+    // Use environment variable for Python command if available
+    const pythonCommand = process.env.PYTHON_COMMAND || 'python3';
+
     console.log(
         `${RED_CODE}TEST MODE: Starting the python server in ${containerDir}${RESET_CODE}`
-    ); const python = spawn("python", ["-u","app.py"], {
+    ); const python = spawn(pythonCommand, ["-u","app.py"], {
         cwd: containerDir,
         stdio: ["ignore", "pipe", "pipe"],
     });
