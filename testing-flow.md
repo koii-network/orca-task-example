@@ -6,14 +6,6 @@ This document outlines the testing flow executed by the `task/tests/main.test.ts
 
 The test suite is structured using Jest, with a `beforeAll` block for initial setup, several `it` blocks for individual test cases, and an `afterAll` block for cleanup.
 
-## .env Setup
-
-Start by coping .env.example to .env and then populate your variables.
-
-If you do not have a Koii wallet configured, you can create one by following this tutorial: https://www.koii.network/docs/develop/command-line-tool/koii-cli/create-wallet
-
-If you need to fund your wallet for deployment, you can use https://buy.koii.network to buy some compute credits.
-
 ## Initialization (`beforeAll`)
 
 1.  **`namespaceWrapper.defaultTaskSetup()`**: This function is called first. It likely initializes the core environment for the task, potentially setting up mock storage, a mock K2 connection, or other foundational elements required for the Koii task SDK to operate in a test environment.
