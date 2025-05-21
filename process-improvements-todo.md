@@ -2,7 +2,7 @@
 
 This document outlines ten recommendations to improve the testing process and iteration time for the Orca Task project based on analysis of the current implementation, ranked from easiest to hardest to implement.
 
-## 1. Implement Configurable Ports and URLs (Easy)
+## 1. Implement Configurable Ports and URLs (Easy) ✅ IMPLEMENTED
 
 **Problem:** Hardcoded ports (5000, 3000, 8080) lead to conflicts with other processes.
 
@@ -20,6 +20,14 @@ export const serviceConfig = {
   pythonServerPort: process.env.PYTHON_SERVER_PORT || 8080
 };
 ```
+
+**Implementation Results:**
+- Successfully updated `middle-server/src/index.ts` to use configurable host and port
+- Updated `task/src/constant.ts` to use environment variables for the middle server URL
+- Updated `task/src/orca.ts` to use environment variables for the Python server and command
+- Updated `task/docker-container/app.py` and `task/docker-container/utils.py` to use environment variables
+- Tests confirmed middle-server successfully running on custom port 5002
+- Documented all configurable variables in updated `.env-sample`
 
 ## 2. Add Test Timeouts and Resilience (Easy)
 
