@@ -1,5 +1,6 @@
 import sqlite3
 import requests
+import os
 from flask import g
 DATABASE = "results.db"
 
@@ -32,11 +33,22 @@ def insertToDb(todoId, submission):
     db.commit()
     close_db()
 
-
-
+def compute_fibonacci(n):
+    """Compute the nth Fibonacci number efficiently"""
+    if n <= 0:
+        return 0
+    elif n == 1:
+        return 1
+    
+    a, b = 0, 1
+    for _ in range(2, n+1):
+        a, b = b, a + b
+    return b
 
 def submit_to_js_task(task_id, data):
     print("Submitting result to JS task...")
+    task_server = os.environ.get("TASK_SERVER_URL", "http://localhost:3000")
+    
     if(task_id!="TESTING_TASK_ID"):
         requests.post(
             f"http://host.docker.internal:30017/task/{task_id}/submit-to-js",
@@ -44,6 +56,6 @@ def submit_to_js_task(task_id, data):
         )
     else:
         requests.post(
-            f"http://localhost:3000/submit-to-js",
+            f"{task_server}/submit-to-js",
             json=data,
         )
